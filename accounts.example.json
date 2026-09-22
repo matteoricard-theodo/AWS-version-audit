@@ -1,0 +1,5 @@
+[
+  {"profile": "your-sso-profile-preprod", "label": "preprod", "region": "eu-west-3"},
+  {"profile": "your-sso-profile-prod", "label": "prod", "region": "eu-west-3"},
+  {"profile": "your-sso-profile-legacy", "label": "legacy", "region": "eu-west-3"}
+]
