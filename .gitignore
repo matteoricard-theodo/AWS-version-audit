@@ -3,3 +3,5 @@ exclusions.json
 targets.json
 output/
 __pycache__/
+.DS_Store
+execution-logs/
