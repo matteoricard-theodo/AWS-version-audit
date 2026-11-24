@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """
 Runs the full pipeline: discover + pull versions (aws_version_audit.py),
-then enrich with EOL/compatibility/CVE data (vuln_lookup.py).
+enrich with EOL/compatibility/CVE data (vuln_lookup.py), then render a
+readable HTML report (report.py).
 
 Usage:
-    python3 main.py                                  # all accounts in ACCOUNTS
+    python3 main.py                                  # all accounts in accounts.json
     python3 main.py --profile X --region eu-west-3 --label foo   # one account
     WPSCAN_API_TOKEN=xxx python3 main.py              # also pull WordPress core CVEs
 """
@@ -27,6 +28,11 @@ def run_vuln_lookup() -> None:
     runpy.run_path(str(SCRIPT_DIR / "vuln_lookup.py"), run_name="__main__")
 
 
+def run_report() -> None:
+    sys.argv = ["report.py"]
+    runpy.run_path(str(SCRIPT_DIR / "report.py"), run_name="__main__")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--profile", help="Only audit this single AWS profile")
@@ -40,11 +46,14 @@ def main() -> None:
         if args.label:
             audit_argv += ["--label", args.label]
 
-    print("### step 1/2: version audit ###")
+    print("### step 1/3: version audit ###")
     run_audit(audit_argv)
 
-    print("\n### step 2/2: vuln / EOL enrichment ###")
+    print("\n### step 2/3: vuln / EOL enrichment ###")
     run_vuln_lookup()
+
+    print("\n### step 3/3: HTML report ###")
+    run_report()
 
 
 if __name__ == "__main__":

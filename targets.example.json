@@ -1,0 +1,10 @@
+{
+  "php": "8.5",
+  "apache": null,
+  "mariadb": null,
+  "overrides": {
+    "machine-name-exactly-as-in-audit-json": {
+      "php": "8.3"
+    }
+  }
+}

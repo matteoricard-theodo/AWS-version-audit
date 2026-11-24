@@ -9,7 +9,9 @@ plus EOL/vuln enrichment.
   versions from every SSM reachable box. Read only, no destructive commands.
 - `vuln_lookup.py` : takes the audit output and checks EOL status, PHP/WordPress compatibility, and best effort
   CVE counts.
-- `main.py` : runs both in sequence.
+- `report.py` : turns the enriched output into a single self contained HTML file, one card per VM, color coded
+  by how urgent its worst finding is (red urgent, orange investigate/plan, green ok). No dependencies.
+- `main.py` : runs all three in sequence.
 
 ## Prerequisites
 
@@ -37,6 +39,7 @@ Can also run each step alone:
 ```
 python3 aws_version_audit.py
 python3 vuln_lookup.py output/audit.json
+python3 report.py output/vuln_report.json
 ```
 
 ## Output
@@ -45,6 +48,8 @@ python3 vuln_lookup.py output/audit.json
   install found (multi tenant Lightsail boxes host several sites) and Apache vhost dumps
 - `output/vuln_report.json` : enriched version, EOL status per component, PHP to WordPress compatibility,
   recommended bump target, OSV CVE counts where applicable
+- `output/report.html` : readable version of the above, open it in a browser (`open output/report.html` on
+  macOS)
 
 ## Data sources used
 
@@ -57,7 +62,7 @@ python3 vuln_lookup.py output/audit.json
 - EOL has two dates: `support` (feature freeze, product still gets security patches after this) and `eol`
   (fully dead, no more patches). Only past `eol` counts as urgent. PHP 8.2 is a real example: support ended
   2024-12-31 but `eol` is 2026-12-31, so it is not urgent yet even though support ended.
-- OSV Debian/Ubuntu ecosystem counts are a rough upper bound, not a precise "currently vulnerable" number.
+- OSV Debian/Ubuntu ecosystem counts are a rough upper bound, not a precise "currently vulnerable" number
   Distros backport security fixes without bumping the version string and OSV does not always reflect that.
 - OSV is skipped for Lightsail/Bitnami components since those are bundled by Bitnami, not the OS package
   manager, the distro tracker has no visibility into them.
@@ -66,3 +71,5 @@ python3 vuln_lookup.py output/audit.json
   tracker does not cover third party repos, so the OSV count for PHP there is flagged unreliable in the output.
 - WordPress installs are found by locating `version.php`. A broken install missing that file will not show up,
   found 3 of those manually earlier (see main Notion audit), this script will not catch new ones the same way.
+
+![Schémas d'archi de la pipeline](docs/pipeline.png)

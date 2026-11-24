@@ -1,0 +1,7 @@
+[
+  {
+    "name": "machine-name-exactly-as-in-audit-json",
+    "reason": "why this machine is excluded from the report, e.g. decommissioned, client request",
+    "excluded_since": "2026-01-01"
+  }
+]

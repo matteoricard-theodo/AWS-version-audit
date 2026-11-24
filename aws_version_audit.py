@@ -79,6 +79,14 @@ echo ===DB===
   || { mariadb --version 2>/dev/null; } \
   || { /opt/bitnami/mysql/bin/mysql --version 2>/dev/null; } \
   || echo NONE
+echo ===DPKG_VERSIONS===
+for pkg in php php8.1 php8.2 php8.3 php8.4 apache2 mariadb-server mysql-server; do
+  v=$(dpkg-query -W -f='${Version}' "$pkg" 2>/dev/null)
+  [ -n "$v" ] && echo "$pkg :: $v"
+done
+echo ===BITNAMI_COMPONENTS===
+cat /opt/bitnami/.bitnami_components.json 2>/dev/null || echo "{}"
+echo
 echo ===WPINSTALLS===
 for base in /var/www /opt/bitnami; do
   find "$base" -maxdepth 4 -iname version.php -path "*wp-includes*" 2>/dev/null
@@ -121,6 +129,8 @@ class Result:
     db: str = ""
     wp_installs: list = field(default_factory=list)
     vhosts: str = ""
+    dpkg_versions: dict = field(default_factory=dict)
+    bitnami_versions: dict = field(default_factory=dict)
     raw_stdout: str = ""
     error: str = ""
 
@@ -304,6 +314,20 @@ def parse_diagnostic_output(stdout: str) -> dict:
             path, version = line.split("::", 1)
             wp_installs.append({"path": path.strip(), "version": version.strip()})
 
+    dpkg_versions = {}
+    for line in data.get("DPKG_VERSIONS", "").splitlines():
+        line = line.strip()
+        if "::" in line:
+            pkg, version = line.split("::", 1)
+            dpkg_versions[pkg.strip()] = version.strip()
+
+    bitnami_versions = {}
+    try:
+        components = json.loads(data.get("BITNAMI_COMPONENTS", "{}") or "{}")
+        bitnami_versions = {name: info.get("version", "") for name, info in components.items() if isinstance(info, dict)}
+    except json.JSONDecodeError:
+        pass
+
     return {
         "os": data.get("OS", "").replace("PRETTY_NAME=", "").strip('"'),
         "kernel": data.get("KERNEL", ""),
@@ -312,6 +336,8 @@ def parse_diagnostic_output(stdout: str) -> dict:
         "db": data.get("DB", "NONE"),
         "wp_installs": wp_installs,
         "vhosts": data.get("VHOSTS", ""),
+        "dpkg_versions": dpkg_versions,
+        "bitnami_versions": bitnami_versions,
     }
 
 
@@ -388,6 +414,8 @@ def write_outputs(all_results: list[Result]) -> None:
             "db": r.db,
             "wp_installs": r.wp_installs,
             "vhosts": r.vhosts,
+            "dpkg_versions": r.dpkg_versions,
+            "bitnami_versions": r.bitnami_versions,
             "error": r.error,
             "raw_stdout": r.raw_stdout,
         })
